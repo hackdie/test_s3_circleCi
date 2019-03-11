@@ -1,5 +1,6 @@
 version: 2
 jobs:
+  
   build:
     docker:
       - image: circleci/node:8
@@ -10,11 +11,6 @@ jobs:
       - run:
           name: Setup Dependencies
           command: npm install
-      # - run:
-      #     name: Setup Code Climate test-reporter
-      #     command: |
-      #       curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-      #       chmod +x ./cc-test-reporter
       - save_cache: # special step to save the dependency cache
           key: dependency-cache-{{ checksum "package.json" }}
           paths:
@@ -23,3 +19,24 @@ jobs:
           name: Run Test and Coverage
           command: |
             npm run build
+
+  deploy:
+    docker:
+      - image: circleci/python:2.7-jessie
+    # working_directory: ~/circleci-docs
+    steps:
+      - run:
+          name: Install awscli
+          command: sudo pip install awscli
+      - run:
+          name: Deploy to S3
+          command: npm run deploy
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
